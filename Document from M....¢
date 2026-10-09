@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Student Success Platform</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#f5f6fa;--card:#fff;--tx:#1b1f2a;--mu:#667085;--bd:#e3e6ee;--ac:#4f46e5;--g:#16a34a;--y:#d97706;--r:#dc2626;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12141b;--card:#1c1f2a;--tx:#e8eaf0;--mu:#9aa1b2;--bd:#2c3140;--ac:#818cf8}}
+:root[data-theme="dark"]{--bg:#12141b;--card:#1c1f2a;--tx:#e8eaf0;--mu:#9aa1b2;--bd:#2c3140;--ac:#818cf8}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+nav{display:flex;gap:4px;align-items:center;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--bd);flex-wrap:wrap;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+nav b{margin-right:12px}nav a{padding:6px 12px;border-radius:8px;color:var(--mu);cursor:pointer;text-decoration:none}nav a.on{background:var(--ac);color:#fff}
+main{max-width:1100px;margin:0 auto;padding:16px}
+.grid{display:grid;gap:12px}.g4{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px}
+.k{font-size:26px;font-weight:700}.mu{color:var(--mu);font-size:12px}h2{margin:4px 0 12px}h3{margin:0 0 10px;font-size:15px}
+.tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600;color:#fff}
+.Low,.CareerReady{background:var(--g)}.Medium,.OnTrack{background:#2563eb}.High,.PlacementSupport,.AcademicSupport{background:var(--y)}.Critical,.CriticalRisk{background:var(--r)}
+select,input,button{font:inherit;padding:7px 10px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx)}
+button{cursor:pointer}button.p{background:var(--ac);color:#fff;border:0}
+.bar{height:9px;background:var(--bd);border-radius:5px;overflow:hidden}.bar i{display:block;height:100%}
+.row{display:flex;gap:8px;align-items:center;margin:6px 0}.row span:first-child{width:110px;flex:none;font-size:12px}.row .bar{flex:1}.row span:last-child{width:44px;text-align:right;font-size:12px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--bd)}th{cursor:pointer;color:var(--mu);font-size:12px}tr.cl{cursor:pointer}tr.cl:hover{background:var(--bg)}
+.sc{overflow-x:auto}.bar-w{width:100%}
+.big{font-size:40px;font-weight:800}.flt{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.login{max-width:340px;margin:12vh auto;display:grid;gap:10px}
+ul{margin:0;padding-left:18px}li{margin:5px 0}
+</style></head><body><div id="app"></div>
+<script>
+// ---------- seeded data ----------
+function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const R=rng(42),rn=(a,b)=>a+R()*(b-a),cl=(v,a=0,b=100)=>Math.max(a,Math.min(b,v)),pick=a=>a[Math.floor(R()*a.length)];
+const FN="Aarav Diya Karthik Meena Rahul Sneha Vikram Anjali Arjun Priya Rohan Kavya Imran Lakshmi Nikhil Divya Suresh Pooja Faisal Ritu".split(" "),LN="Kumar Sharma Iyer Nair Reddy Patel Singh Menon Das Raj Gupta Pillai".split(" ");
+const DEPTS=["CSE","IT","ECE","MECH","CIVIL"];
+const S=[];for(let i=0;i<80;i++){const q=R(),d=pick(DEPTS);
+ const s={id:"S"+(1001+i),name:pick(FN)+" "+pick(LN),dept:d,year:1+Math.floor(R()*4)};
+ const base=q<.18?rn(30,55):q<.5?rn(55,72):rn(70,95);
+ s.cgpa=+cl(base/10+rn(-.8,.8),4,9.9).toFixed(1);s.backlogs=s.cgpa<6?Math.floor(rn(1,5)):R()<.1?1:0;
+ s.att=Math.round(cl(base+rn(-15,15),35,99));s.lms=Math.round(cl(base+rn(-20,20),10,99));
+ s.mock=Math.round(cl(base+rn(-22,18),15,99));s.skills=Math.round(cl(base+rn(-25,15),10,99));
+ s.eng=Math.round(cl(base+rn(-30,20),5,99));s.certs=Math.floor(s.skills/25);s.intern=s.year>2&&s.skills>60?1:0;
+ s.skillList=["Python","Java","SQL","Communication","Aptitude","React","Cloud","Problem Solving"].filter(()=>R()<s.skills/110).slice(0,5);
+ analyze(s);S.push(s)}
+// ---------- AI model (rule-based, explainable) ----------
+const F=[ // key,label,weight,benchmark,getter
+ ["cgpa","CGPA",.28,7,s=>s.cgpa*10/10,10],["att","Attendance",.2,80,s=>s.att,1],["lms","LMS activity",.12,60,s=>s.lms,1],
+ ["mock","Placement mock score",.15,60,s=>s.mock,1],["skills","Skill proficiency",.13,60,s=>s.skills,1],["eng","Engagement",.07,50,s=>s.eng,1],["backlogs","Backlogs",.05,0,s=>s.backlogs,1]];
+function analyze(s){
+ const n=cgpa=>cgpa*10;
+ s.success=Math.round(cl(.28*n(s.cgpa)+.2*s.att+.12*s.lms+.15*s.mock+.13*s.skills+.07*s.eng-s.backlogs*4+4));
+ s.acRisk=Math.round(cl(100-(.5*n(s.cgpa)+.3*s.att+.2*s.lms)+s.backlogs*6));
+ s.plRisk=Math.round(cl(100-(.35*s.mock+.3*s.skills+.2*n(s.cgpa)+.15*s.eng)+(s.intern?-8:0)));
+ const m=Math.max(s.acRisk,s.plRisk);s.level=m>=65?"Critical":m>=50?"High":m>=35?"Medium":"Low";
+ s.seg=s.acRisk>=60&&s.plRisk>=55?"Critical Risk":s.acRisk>=45?"Academic Support":s.plRisk>=45?"Placement Support":s.success>=72?"Career Ready":"On Track";
+ // factor impact: points of success score lost (+) / gained (-) vs benchmark
+ const v={cgpa:n(s.cgpa),att:s.att,lms:s.lms,mock:s.mock,skills:s.skills,eng:s.eng};
+ const bm={cgpa:70,att:80,lms:60,mock:60,skills:60,eng:50},w={cgpa:.28,att:.2,lms:.12,mock:.15,skills:.13,eng:.07},lb={cgpa:"CGPA",att:"Attendance",lms:"LMS activity",mock:"Placement mock score",skills:"Skill proficiency",eng:"Engagement"};
+ s.factors=Object.keys(v).map(k=>({k,label:lb[k],val:k=="cgpa"?s.cgpa:v[k]+"%",impact:+(w[k]*(bm[k]-v[k])).toFixed(1)}));
+ if(s.backlogs)s.factors.push({k:"backlogs",label:"Active backlogs",val:s.backlogs,impact:+(s.backlogs*4).toFixed(1)});
+ s.factors.sort((a,b)=>b.impact-a.impact);
+}
+const REC={cgpa:"Assign faculty mentor and weekly remedial classes for weak subjects",att:"Counsel on attendance; notify parents if below 75%",lms:"Nudge to complete pending LMS modules; set weekly learning targets",mock:"Enroll in aptitude & mock-interview bootcamp",skills:"Recommend a skill-up path (e.g. SQL / Python / Cloud certification)",eng:"Encourage club, hackathon or project-team participation",backlogs:"Arrange backlog clearance plan with peer tutoring"};
+const recs=s=>s.factors.filter(f=>f.impact>0.8).slice(0,4).map(f=>REC[f.k]).concat(s.success>=72?["Fast-track for company-specific drives and internships"]:[]);
+// ---------- state ----------
+let st={view:"login",dept:"All",year:"All",q:"",risk:"All",sort:"success",dir:-1,sel:null,iv:{}};
+try{st.iv=JSON.parse(localStorage.getItem("iv")||"{}")}catch(e){}
+const saveIv=()=>{try{localStorage.setItem("iv",JSON.stringify(st.iv))}catch(e){}};
+const $=id=>document.getElementById(id),avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0;
+const col=v=>v>=65?"var(--r)":v>=45?"var(--y)":"var(--g)",colS=v=>v>=70?"var(--g)":v>=50?"var(--y)":"var(--r)";
+const tag=t=>`<span class="tag ${t.replace(/ /g,"")}">${t}</span>`;
+const bar=(l,v,c)=>`<div class="row"><span>${l}</span><div class="bar"><i style="width:${v}%;background:${c}"></i></div><span>${v}</span></div>`;
+const fl=()=>S.filter(s=>(st.dept=="All"||s.dept==st.dept)&&(st.year=="All"||s.year==st.year));
+const go=(v,id)=>{st.view=v;if(id)st.sel=id;render();scrollTo(0,0)};
+// ---------- views ----------
+function render(){const A=$("app");
+ if(st.view=="login"){A.innerHTML=`<div class="login card"><h2>🎓 Student Success Platform</h2><div class="mu">AI-powered analytics for faculty & admins</div>
+ <select id="role"><option>Faculty</option><option>Admin</option></select><input value="faculty@college.edu"><input type="password" value="demo1234"><button class="p" onclick="go('dash')">Sign in</button></div>`;return}
+ const tabs=[["dash","Dashboard"],["list","Students"],["seg","Segments"],["ana","Analytics"],["iv","Interventions"]];
+ const act=st.view=="prof"?"list":st.view;
+ A.innerHTML=`<nav><b>🎓 SuccessAI</b>${tabs.map(t=>`<a class="${act==t[0]?"on":""}" onclick="go('${t[0]}')">${t[1]}</a>`).join("")}<a style="margin-left:auto" onclick="go('login')">Logout</a></nav><main id="m"></main>`;
+ $("m").innerHTML=({dash,list,prof,seg,ana,iv:ivw})[st.view]()}
+function filters(){return `<div class="flt"><select onchange="st.dept=this.value;render()">${["All",...DEPTS].map(d=>`<option ${st.dept==d?"selected":""}>${d}</option>`).join("")}</select><select onchange="st.year=this.value;render()">${["All",1,2,3,4].map(y=>`<option value="${y}" ${st.year==y?"selected":""}>${y=="All"?"All years":"Year "+y}</option>`).join("")}</select></div>`}
+function dash(){const d=fl(),hr=d.filter(s=>s.level=="Critical"||s.level=="High");
+ return `<h2>Dashboard</h2>${filters()}<div class="grid g4">
+ <div class="card"><div class="mu">Total students</div><div class="k">${d.length}</div></div>
+ <div class="card"><div class="mu">Avg Success Score</div><div class="k">${avg(d.map(s=>s.success))}<small>/100</small></div></div>
+ <div class="card"><div class="mu">High-risk students</div><div class="k" style="color:var(--r)">${hr.length}</div></div>
+ <div class="card"><div class="mu">Placement readiness</div><div class="k">${avg(d.map(s=>100-s.plRisk))}%</div></div></div>
+ <div class="grid g2" style="margin-top:12px"><div class="card"><h3>Academic analytics</h3>${bar("Avg CGPA×10",avg(d.map(s=>s.cgpa*10)),"var(--ac)")}${bar("Attendance",avg(d.map(s=>s.att)),"var(--ac)")}${bar("LMS activity",avg(d.map(s=>s.lms)),"var(--ac)")}</div>
+ <div class="card"><h3>Placement analytics</h3>${bar("Mock score",avg(d.map(s=>s.mock)),"#0891b2")}${bar("Skills",avg(d.map(s=>s.skills)),"#0891b2")}${bar("Engagement",avg(d.map(s=>s.eng)),"#0891b2")}</div></div>
+ <div class="card" style="margin-top:12px"><h3>Top at-risk students</h3>${tbl(hr.sort((a,b)=>b.acRisk+b.plRisk-a.acRisk-a.plRisk).slice(0,5))}</div>`}
+function tbl(d){return `<div class="sc"><table><tr><th onclick="sortBy('name')">Name</th><th>Dept</th><th>Yr</th><th onclick="sortBy('success')">Success ▾</th><th>Risk</th><th>Segment</th></tr>${d.map(s=>`<tr class="cl" onclick="go('prof','${s.id}')"><td>${s.name}<div class="mu">${s.id}</div></td><td>${s.dept}</td><td>${s.year}</td><td><b style="color:${colS(s.success)}">${s.success}</b></td><td>${tag(s.level)}</td><td>${tag(s.seg)}</td></tr>`).join("")}</table></div>`}
+function sortBy(k){st.dir=st.sort==k?-st.dir:(k=="name"?1:-1);st.sort=k;render()}
+function lf(){const d=fl().filter(s=>(s.name+s.id).toLowerCase().includes(st.q.toLowerCase())&&(st.risk=="All"||s.level==st.risk));
+ d.sort((a,b)=>(a[st.sort]>b[st.sort]?1:-1)*st.dir);return d}
+function upd(){const d=lf();$("lc").textContent=d.length+" students · click a header to sort · click a row for profile";$("lt").innerHTML=tbl(d)}
+function nextRisk(id){const L=S.filter(s=>s.level=="Critical"||s.level=="High").sort((a,b)=>b.acRisk+b.plRisk-a.acRisk-a.plRisk),i=L.findIndex(s=>s.id==id);go("prof",L[(i+1)%L.length].id)}
+function list(){const d=lf();
+ return `<h2>Students</h2>${filters().replace("</div>",`<input id="q" placeholder="Search name / ID" value="${st.q}" oninput="st.q=this.value;clearTimeout(window.T);window.T=setTimeout(upd,120)"><select onchange="st.risk=this.value;render()">${["All","Low","Medium","High","Critical"].map(r=>`<option ${st.risk==r?"selected":""} value="${r}">${r=="All"?"All risk levels":r+" risk"}</option>`).join("")}</select></div>`)}<div class="mu" id="lc" style="margin-bottom:6px">${d.length} students · click a header to sort · click a row for profile</div><div class="card" id="lt">${tbl(d)}</div>`}
+function prof(){const s=S.find(x=>x.id==st.sel),top=s.factors.filter(f=>f.impact>0).slice(0,5),c=st.iv[s.id]||"Not assigned";
+ return `<div style="display:flex;justify-content:space-between;align-items:center"><a onclick="go('list')" style="cursor:pointer;color:var(--ac)">← Back</a><button class="p" onclick="nextRisk('${s.id}')">Next at-risk student →</button></div><h2>${s.name} <span class="mu">${s.id} · ${s.dept} · Year ${s.year}</span></h2>
+ <div class="grid g2"><div class="card"><h3>Student profile</h3>
+ <div class="mu">Academic</div>${bar("CGPA×10",Math.round(s.cgpa*10),"var(--ac)")}<div class="mu">Backlogs: ${s.backlogs}</div>
+ <div class="mu" style="margin-top:8px">Attendance / LMS</div>${bar("Attendance",s.att,"var(--ac)")}${bar("LMS",s.lms,"var(--ac)")}
+ <div class="mu" style="margin-top:8px">Placement</div>${bar("Mock score",s.mock,"#0891b2")}<div class="mu">Internships: ${s.intern} · Certifications: ${s.certs}</div>
+ <div class="mu" style="margin-top:8px">Skills</div>${bar("Skill level",s.skills,"#0891b2")}<div>${s.skillList.map(k=>`<span class="tag" style="background:var(--ac);margin:2px">${k}</span>`).join("")||"<span class=mu>None recorded</span>"}</div>
+ <div class="mu" style="margin-top:8px">Engagement</div>${bar("Engagement",s.eng,"#0891b2")}</div>
+ <div class="card"><h3>🤖 AI analysis</h3><div class="grid g4" style="grid-template-columns:1fr 1fr 1fr"><div><div class="mu">Success Score</div><div class="big" style="color:${colS(s.success)}">${s.success}<small style="font-size:14px">/100</small></div></div>
+ <div><div class="mu">Academic Risk</div><div class="big" style="color:${col(s.acRisk)}">${s.acRisk}%</div></div><div><div class="mu">Placement Risk</div><div class="big" style="color:${col(s.plRisk)}">${s.plRisk}%</div></div></div>
+ <div style="margin:8px 0">Risk level: ${tag(s.level)} &nbsp; Segment: ${tag(s.seg)}</div>
+ <h3 style="margin-top:14px">Why is this student at risk?</h3>${top.length?top.map(f=>`<div class="row"><span style="width:140px">${f.label} (${f.val})</span><div class="bar"><i style="width:${Math.min(100,f.impact*6)}%;background:var(--r)"></i></div><span>−${f.impact}</span></div>`).join("")+`<div class="mu">Points lost from Success Score vs. class benchmark</div>`:"<div>No significant risk factors — performing at or above benchmark.</div>"}</div></div>
+ <div class="grid g2" style="margin-top:12px"><div class="card"><h3>💡 AI recommendations</h3><ul>${recs(s).map(r=>`<li>${r}</li>`).join("")||"<li>Maintain current trajectory</li>"}</ul></div>
+ <div class="card"><h3>Intervention tracking</h3><div style="margin-bottom:8px">Status: <b>${c}</b></div>
+ ${["Assigned","In Progress","Improved"].map(x=>`<button class="${c==x?"p":""}" onclick="setIv('${s.id}','${x}')">${x}</button> `).join("")}</div></div>`}
+function setIv(id,v){st.iv[id]=v;saveIv();render()}
+function seg(){const names=["Career Ready","On Track","Academic Support","Placement Support","Critical Risk"],d=fl();
+ return `<h2>Student segmentation</h2>${filters()}<div class="grid g2">${names.map(n=>{const m=d.filter(s=>s.seg==n);return `<div class="card"><h3>${tag(n)} <span class="mu">${m.length} students</span></h3><div class="mu" style="margin-bottom:6px">${{"Career Ready":"High score, low placement risk","On Track":"Steady progress, monitor","Academic Support":"Needs academic mentoring","Placement Support":"Needs skills & interview prep","Critical Risk":"Urgent: academic + placement risk"}[n]}</div>${m.slice(0,5).map(s=>`<div class="row" style="cursor:pointer" onclick="go('prof','${s.id}')"><span style="width:auto;flex:1">${s.name}</span><span>${s.success}</span></div>`).join("")}${m.length>5?`<div class="mu">+${m.length-5} more</div>`:""}</div>`}).join("")}</div>`}
+function ana(){const d=fl(),lv=["Low","Medium","High","Critical"];
+ const trend=[0,1,2,3,4,5].map(i=>Math.round(cl(avg(d.map(s=>100-s.plRisk))-12+i*2.6+(i%2?1:-1),0,100)));
+ const pts=trend.map((v,i)=>`${30+i*50},${110-v*1.0}`).join(" ");
+ return `<h2>Analytics</h2>${filters()}<div class="grid g2">
+ <div class="card"><h3>Department comparison (avg Success Score)</h3>${DEPTS.map(x=>bar(x,avg(S.filter(s=>s.dept==x&&(st.year=="All"||s.year==st.year)).map(s=>s.success)),"var(--ac)")).join("")}</div>
+ <div class="card"><h3>Risk distribution</h3>${lv.map(l=>{const n=d.filter(s=>s.level==l).length;return bar(l,Math.round(n/Math.max(1,d.length)*100),{Low:"var(--g)",Medium:"#2563eb",High:"var(--y)",Critical:"var(--r)"}[l])}).join("")}<div class="mu">% of students (${d.length})</div></div>
+ <div class="card"><h3>Placement readiness trend</h3><svg viewBox="0 0 300 130" class="bar-w"><polyline fill="none" stroke="var(--ac)" stroke-width="3" points="${pts}"/>${trend.map((v,i)=>`<circle cx="${30+i*50}" cy="${110-v}" r="4" fill="var(--ac)"/><text x="${30+i*50}" y="${100-v}" font-size="10" text-anchor="middle" fill="var(--mu)">${v}</text><text x="${30+i*50}" y="126" font-size="10" text-anchor="middle" fill="var(--mu)">Sem ${i+1}</text>`).join("")}</svg></div>
+ <div class="card"><h3>Avg placement risk by year</h3>${[1,2,3,4].map(y=>bar("Year "+y,avg(S.filter(s=>s.year==y&&(st.dept=="All"||s.dept==st.dept)).map(s=>s.plRisk)),"var(--y)")).join("")}</div></div>`}
+function ivw(){const e=Object.entries(st.iv),cols=["Assigned","In Progress","Improved"];
+ return `<h2>Intervention tracking</h2><div class="mu" style="margin-bottom:10px">Open a student profile to assign an intervention. Tip: <a style="color:var(--ac);cursor:pointer" onclick="seed()">auto-assign for all Critical students</a></div>
+ <div class="grid g4" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">${cols.map(c=>`<div class="card"><h3>${c} (${e.filter(x=>x[1]==c).length})</h3>${e.filter(x=>x[1]==c).map(([id])=>{const s=S.find(x=>x.id==id);return `<div class="row" style="cursor:pointer" onclick="go('prof','${id}')"><span style="width:auto;flex:1">${s.name}</span>${tag(s.level)}</div>`}).join("")||'<div class="mu">None</div>'}</div>`).join("")}</div>`}
+function seed(){S.filter(s=>s.level=="Critical").forEach(s=>{if(!st.iv[s.id])st.iv[s.id]="Assigned"});saveIv();render()}
+render();
+</script></body></html>
